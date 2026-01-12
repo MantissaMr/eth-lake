@@ -14,3 +14,4 @@ tokio = {version = "1", features = ["full"]}
 pyo3-asyncio = {version = "0.20", features = ["tokio-runtime"]}
 alloy = {version = "0.1", features = ["full"]}
 url = "2.5"
+arrow = "53"
