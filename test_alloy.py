@@ -16,7 +16,7 @@ async def main():
     # --- testing fetch block arrow ---
     print(f"Fetching block 19000000...")
     try:
-        block_hash = await eth_lake.fetch_block_arrow(RPC_URL, 19000000)
+        block_hash = await eth_lake.fetch_block_arrow(RPC_URL, 19000000, "block_19000000.parquet")
         print(f"[SUCCESS!] Block Hash: {block_hash}")
     except Exception as e:
         print(f"ERROR: {e}")
