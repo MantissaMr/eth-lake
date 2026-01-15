@@ -1,3 +1,4 @@
+use parquet::file;
 use pyo3::prelude::*;
 use pyo3_asyncio::tokio::future_into_py;
 use alloy::providers::{Provider, ProviderBuilder};
@@ -7,11 +8,13 @@ use arrow::array::{UInt64Builder, StringBuilder};
 use arrow::datatypes::{DataType, Field, Schema};
 use arrow::record_batch::RecordBatch;
 use std::sync::Arc; 
+use std::fs::File;
+use parquet::arrow::arrow_writer::ArrowWriter;
 
 
 /// Asynchronously fetches a block from the Ethereum blockchain and returns its data
 #[pyfunction]
-fn fetch_block_arrow(py: Python<'_>, rpc_url: String, block_number: u64) -> PyResult<&PyAny> {
+fn fetch_block_arrow(py: Python<'_>, rpc_url: String, block_number: u64, output_path: String) -> PyResult<&PyAny> {
     future_into_py(py, async move {
         // -- SETUP CONNECTION -- 
         let valid_url = Url::parse(&rpc_url)
@@ -70,7 +73,20 @@ fn fetch_block_arrow(py: Python<'_>, rpc_url: String, block_number: u64) -> PyRe
         ],)
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))?;
         
-        Ok(format!("{:?}", batch))
+        // -- WRITE TO PARQUET -- 
+        let file = File::create(&output_path)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(format!("Failed to create file: {}", e)))?;
+
+        let mut writer = ArrowWriter::try_new(file, batch.schema(), None)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("Failed to create ArrowWriter: {}", e)))?;
+
+        writer.write(&batch)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("Failed to write batch: {}", e)))?;
+
+        writer.close()
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("Failed to close writer: {}", e)))?;
+            
+        Ok(output_path)
     })
 }
 
