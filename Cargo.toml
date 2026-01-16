@@ -16,3 +16,5 @@ alloy = {version = "0.1", features = ["full"]}
 url = "2.5"
 arrow = "53"
 parquet = "53"
+futures = "0.3"
+anyhow = "1.0"
