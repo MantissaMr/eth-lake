@@ -162,3 +162,24 @@ async fn process_block(
 
     Ok(file_name)
 }
+
+// --- TESTS ---
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // To ensure types are wired up correctly
+    #[test]
+    fn test_schema_definition() {
+        let schema = Schema::new(vec![
+            Field::new("number", DataType::UInt64, false),
+            Field::new("hash", DataType::Utf8, false),
+            Field::new("parent_hash", DataType::Utf8, false),
+        ]);
+
+        assert_eq!(schema.fields().len(), 3);
+        assert_eq!(schema.field(0).name(), "number");
+        assert_eq!(schema.field(1).name(), "hash");
+        assert_eq!(schema.field(2).name(), "parent_hash");
+    }
+}
