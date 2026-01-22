@@ -14,7 +14,6 @@ permissions:
   contents: read
 
 jobs:
-  # Linux: Only standard x86_64. Dropped the weird archs.
   linux:
     runs-on: ubuntu-latest
     steps:
@@ -34,7 +33,6 @@ jobs:
           name: wheels-linux-x86_64
           path: dist
 
-  # Windows: Standard x64 only.
   windows:
     runs-on: windows-latest
     steps:
@@ -54,7 +52,6 @@ jobs:
           name: wheels-windows-x64
           path: dist
 
-  # MacOS: Keeping your fixed v15 runner
   macos:
     runs-on: macos-15
     steps:
@@ -73,7 +70,6 @@ jobs:
           name: wheels-macos-x86_64
           path: dist
 
-  # Release job (Only runs on tags)
   release:
     name: Release
     runs-on: ubuntu-latest
