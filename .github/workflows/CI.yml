@@ -25,8 +25,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: x86_64
-          # We disable manylinux (Docker) and build natively on the runner
-          manylinux: off
+          manylinux: auto
           args: --release --out dist --interpreter 3.11
       - name: Upload wheels
         uses: actions/upload-artifact@v4
