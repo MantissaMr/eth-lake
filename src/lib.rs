@@ -1,7 +1,5 @@
-
-use alloy::providers::{Provider, ProviderBuilder, RootProvider};
-use alloy::rpc::types::eth::BlockNumberOrTag;
-use alloy::transports::http::{Client, Http};
+use alloy::providers::{Provider, ProviderBuilder};
+use alloy::rpc::types::BlockNumberOrTag;
 use arrow::array::{StringBuilder, UInt64Builder};
 use arrow::datatypes::{DataType, Field, Schema};
 use arrow::record_batch::RecordBatch;
@@ -9,7 +7,7 @@ use futures::stream::{self, StreamExt};
 use pyo3::prelude::*;
 use pyo3_asyncio::tokio::future_into_py;
 use std::sync::Arc;
-use url::Url;
+// use url::Url;
 
 // --- PYTHON PUBLIC INTERFACE ---
 
@@ -72,14 +70,19 @@ fn extract_range(
 fn get_latest_block(py: Python<'_>, rpc_url: String) -> PyResult<&PyAny> {
     future_into_py(py, async move {
         // Parse the URL
-        let valid_url = Url::parse(&rpc_url).map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Invalid URL: {}", e))
-        })?;
+        // let valid_url = Url::parse(&rpc_url).map_err(|e| {
+        //     PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Invalid URL: {}", e))
+        // })?;
 
-        // Build the Provider
-        let client = Client::new();
-        let transport = Http::new(valid_url);
-        let provider = RootProvider::<Http<Client>>::new(transport);
+       // Build the Provider
+        let provider = ProviderBuilder::new().on_builtin(&rpc_url).await.map_err(|e| {
+        PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("Failed to connect: {}", e))
+        })?;
+        
+        // let client = ReqwestClient::new();
+        // let transport = Http::with_client(client, valid_url);
+        // let rpc_client = alloy::rpc::client::RpcClient::new(transport, true);
+        // let provider = RootProvider::new(rpc_client);
 
         // Fetch the block number
         let block_number = provider.get_block_number().await.map_err(|e| {
@@ -111,12 +114,16 @@ async fn process_block(
     block_number: u64,
     output_dir: String,
 ) -> anyhow::Result<String> {
+    
     // -- SETUP CONNECTION --
-    let valid_url = Url::parse(&rpc_url)?;
-    let client = Client::new();
-    let transport = Http::new(valid_url);
-    let provider = RootProvider::<Http<Client>>::new(transport);
+    let provider = ProviderBuilder::new().on_builtin(&rpc_url).await?;
     let alloy_block_number = BlockNumberOrTag::Number(block_number);
+    
+    // let valid_url = Url::parse(&rpc_url)?;
+    // let client = ReqwestClient::new();
+    // let transport = Http::with_client(client, valid_url);
+    // let rpc_client = alloy::rpc::client::RpcClient::new(transport, true);
+    // let provider = RootProvider::new(rpc_client);
 
     // -- FETCH BLOCK DATA --
     let block_data = provider
