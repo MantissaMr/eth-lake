@@ -1509,7 +1509,6 @@ dependencies = [
  "pyo3-asyncio",
  "reqwest",
  "tokio",
- "url",
 ]
 
 [[package]]

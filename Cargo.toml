@@ -22,7 +22,6 @@ alloy = {version = "0.1", default-features = false, features = [
     "rpc-types-eth",
     "signer-local",
 ]}
-url = "2.5"
 arrow = "53"
 parquet = "53"
 futures = "0.3"
