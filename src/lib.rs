@@ -1,5 +1,7 @@
-use alloy::providers::{Provider, ProviderBuilder};
+
+use alloy::providers::{Provider, ProviderBuilder, RootProvider};
 use alloy::rpc::types::eth::BlockNumberOrTag;
+use alloy::transports::http::{Client, Http};
 use arrow::array::{StringBuilder, UInt64Builder};
 use arrow::datatypes::{DataType, Field, Schema};
 use arrow::record_batch::RecordBatch;
@@ -75,7 +77,9 @@ fn get_latest_block(py: Python<'_>, rpc_url: String) -> PyResult<&PyAny> {
         })?;
 
         // Build the Provider
-        let provider = ProviderBuilder::new().on_http(valid_url);
+        let client = Client::new();
+        let transport = Http::new(valid_url);
+        let provider = RootProvider::<Http<Client>>::new(transport);
 
         // Fetch the block number
         let block_number = provider.get_block_number().await.map_err(|e| {
@@ -109,7 +113,9 @@ async fn process_block(
 ) -> anyhow::Result<String> {
     // -- SETUP CONNECTION --
     let valid_url = Url::parse(&rpc_url)?;
-    let provider = ProviderBuilder::new().on_http(valid_url);
+    let client = Client::new();
+    let transport = Http::new(valid_url);
+    let provider = RootProvider::<Http<Client>>::new(transport);
     let alloy_block_number = BlockNumberOrTag::Number(block_number);
 
     // -- FETCH BLOCK DATA --
