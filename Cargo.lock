@@ -1658,6 +1658,7 @@ dependencies = [
  "arrow",
  "futures",
  "openssl",
+ "openssl-src",
  "parquet",
  "pyo3",
  "pyo3-asyncio",

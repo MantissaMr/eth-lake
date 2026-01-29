@@ -24,3 +24,4 @@ parquet = "53"
 futures = "0.3"
 anyhow = "1.0"
 openssl = {version = "0.10", features = ["vendored"]} 
+openssl-src = {version = "300", features = ["force-engine"]}
