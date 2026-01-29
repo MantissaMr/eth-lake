@@ -18,10 +18,10 @@ pyo3 = {version = "0.20.0", features = ["extension-module"]}
 tokio = {version = "1", features = ["full"]}
 pyo3-asyncio = {version = "0.20", features = ["tokio-runtime"]}
 alloy = {version = "0.1", features = ["full"]}
+alloy-provider = {version = "0.1", features = ["reqwest-rustls-tls"]}
+alloy-transport-http = {version = "0.1", features = ["reqwest-rustls-tls"]}
 url = "2.5"
 arrow = "53"
 parquet = "53"
 futures = "0.3"
 anyhow = "1.0"
-openssl = {version = "0.10", features = ["vendored"]} 
-openssl-src = {version = "300", features = ["force-engine"]}
