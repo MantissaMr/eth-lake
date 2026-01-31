@@ -1,6 +1,5 @@
 import eth_lake
 import asyncio
-import os
 
 RPC_URL = "https://eth.llamarpc.com" 
 
@@ -23,7 +22,8 @@ async def main():
     
     # --- testing extract range ---
     print(f"Extracting blocks 19000000 to 19000010...")
-    await eth_lake.extract_range(RPC_URL, 19000000, 19000010, ".", 5)
+    result = await eth_lake.extract_range(RPC_URL, 19000000, 19000010, ".", 5) 
+    print(result) 
     return
 
 
