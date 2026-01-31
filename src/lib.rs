@@ -7,7 +7,7 @@ use futures::stream::{self, StreamExt};
 use pyo3::prelude::*;
 use pyo3_asyncio::tokio::future_into_py;
 use std::sync::Arc;
-// use url::Url;
+use url::Url;
 
 // --- PYTHON PUBLIC INTERFACE ---
 
@@ -19,6 +19,9 @@ fn fetch_block_arrow(
     block_number: u64,
     output_path: String,
 ) -> PyResult<&PyAny> {
+    
+    let rpc_url = validate_rpc_url_py(&rpc_url)?;
+    
     future_into_py(py, async move {
         process_block(rpc_url, block_number, output_path)
             .await
@@ -41,6 +44,9 @@ fn extract_range(
     output_dir: String,
     concurrency: usize,
 ) -> PyResult<&PyAny> {
+
+    let rpc_url = validate_rpc_url_py(&rpc_url)?;
+
     future_into_py(py, async move {
         let stream = stream::iter(start..=end)
             .map(|block_number| {
@@ -58,7 +64,7 @@ fn extract_range(
         for result in results {
             match result {
                 Ok(_) => success_count += 1,
-                Err(e) => println!("Error: {}", e),
+                Err(e) => eprintln!("Error: {}", e),
             }
         }
         Ok(format!("Processed {} blocks successfully.", success_count))
@@ -68,21 +74,15 @@ fn extract_range(
 /// Returns the latest block number from the connected RPC node.
 #[pyfunction]
 fn get_latest_block(py: Python<'_>, rpc_url: String) -> PyResult<&PyAny> {
-    future_into_py(py, async move {
-        // Parse the URL
-        // let valid_url = Url::parse(&rpc_url).map_err(|e| {
-        //     PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Invalid URL: {}", e))
-        // })?;
-
-       // Build the Provider
-        let provider = ProviderBuilder::new().on_builtin(&rpc_url).await.map_err(|e| {
-        PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("Failed to connect: {}", e))
-        })?;
         
-        // let client = ReqwestClient::new();
-        // let transport = Http::with_client(client, valid_url);
-        // let rpc_client = alloy::rpc::client::RpcClient::new(transport, true);
-        // let provider = RootProvider::new(rpc_client);
+        let rpc_url = validate_rpc_url_py(&rpc_url)?;
+        
+        future_into_py(py, async move {
+       // Build the Provider
+        let provider = ProviderBuilder::new()
+            .on_builtin(rpc_url.as_str())  
+            .await
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("Failed to connect: {}", e)))?;
 
         // Fetch the block number
         let block_number = provider.get_block_number().await.map_err(|e| {
@@ -108,29 +108,57 @@ fn eth_lake(_py: Python, m: &PyModule) -> PyResult<()> {
 }
 
 // --- HELPERS ---
+/// Pure Rust URL validation
+fn validate_rpc_url_pure(url: &str) -> anyhow::Result<Url> {
+    let trimmed = url.trim();
+    if trimmed.is_empty() {
+        return Err(anyhow::anyhow!("RPC URL cannot be empty"));
+    }
+    let parsed = Url::parse(trimmed)
+        .map_err(|e| anyhow::anyhow!("Invalid URL syntax: {}", e))?;
+    
+    if !["http", "https", "ws", "wss"].contains(&parsed.scheme()) {
+        return Err(anyhow::anyhow!(
+            "Unsupported URL scheme '{}'. Expected http(s) or ws(s)",
+            parsed.scheme()
+        ));
+    }
+    
+    Ok(parsed)
+}
+
+/// Converts pure Rust validation errors to Python exceptions
+fn validate_rpc_url_py(url: &str) -> PyResult<Url> {
+    validate_rpc_url_pure(url).map_err(|e| {
+        PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string())
+    })
+}
+
+
 /// Core logic: Connects, fetches, transforms to Arrow, and writes to Parquet
 async fn process_block(
-    rpc_url: String,
+    rpc_url: Url, // Validated URL
     block_number: u64,
     output_dir: String,
 ) -> anyhow::Result<String> {
+
+    // -- ENSURE OUTPUT DIRECTORY EXISTS --
+    std::fs::create_dir_all(&output_dir)?;
     
     // -- SETUP CONNECTION --
-    let provider = ProviderBuilder::new().on_builtin(&rpc_url).await?;
+    let provider = ProviderBuilder::new()
+        .on_builtin(&rpc_url.to_string())
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to connect to RPC: {}", e))?;
+
     let alloy_block_number = BlockNumberOrTag::Number(block_number);
-    
-    // let valid_url = Url::parse(&rpc_url)?;
-    // let client = ReqwestClient::new();
-    // let transport = Http::with_client(client, valid_url);
-    // let rpc_client = alloy::rpc::client::RpcClient::new(transport, true);
-    // let provider = RootProvider::new(rpc_client);
 
     // -- FETCH BLOCK DATA --
     let block_data = provider
         .get_block_by_number(alloy_block_number, true)
         .await
-        .map_err(|e| anyhow::anyhow!("Network error:{}", e))?
-        .ok_or_else(|| anyhow::anyhow!("Block not found!"))?;
+        .map_err(|e| anyhow::anyhow!("Network error: {}", e))?
+        .ok_or_else(|| anyhow::anyhow!("Block {} not found!", block_number))?;
 
     // -- DEFINE SCHEMA & BUILDERS --
     let schema = Schema::new(vec![
@@ -149,10 +177,10 @@ async fn process_block(
         block_data
             .header
             .hash
-            .map(|h| h.to_string())
+            .map(|h| format!("{:#x}", h)) 
             .unwrap_or_default(),
     );
-    parent_builder.append_value(block_data.header.parent_hash.to_string());
+    parent_builder.append_value(format!("{:#x}", block_data.header.parent_hash));
 
     // -- CREATE RECORD BATCH --
     let batch = RecordBatch::try_new(
@@ -176,6 +204,7 @@ async fn process_block(
     Ok(file_name)
 }
 
+
 // --- TESTS ---
 #[cfg(test)]
 mod tests {
@@ -194,5 +223,31 @@ mod tests {
         assert_eq!(schema.field(0).name(), "number");
         assert_eq!(schema.field(1).name(), "hash");
         assert_eq!(schema.field(2).name(), "parent_hash");
+    }
+
+    #[test]
+     fn test_validate_rpc_url_valid() {
+        assert!(validate_rpc_url_pure("https://eth.llamarpc.com").is_ok());
+        assert!(validate_rpc_url_pure("http://localhost:8545").is_ok());
+        assert!(validate_rpc_url_pure("https://eth.llamarpc.com/  ").is_ok()); // Trimming works
+        assert!(validate_rpc_url_pure("wss://eth.llamarpc.com").is_ok()); // WebSocket allowed
+    }
+
+    #[test]
+    fn test_validate_rpc_url_invalid() {
+        assert!(validate_rpc_url_pure("").is_err());
+        assert!(validate_rpc_url_pure("not-a-url").is_err());
+        assert!(validate_rpc_url_pure("ftp://invalid.com").is_err()); // Wrong scheme (security)
+        assert!(validate_rpc_url_pure("ssh://hackme.com").is_err()); // Wrong scheme
+    }
+        
+    #[test]
+    fn test_output_dir_creation() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let test_path = temp_dir.path().join("nested/subdir");
+        
+        // Should succeed even if nested dirs don't exist
+        assert!(std::fs::create_dir_all(&test_path).is_ok());
+        assert!(test_path.exists());
     }
 }
