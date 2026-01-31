@@ -27,6 +27,8 @@ jobs:
             target: armv7
     steps:
       - uses: actions/checkout@v6
+      - name: Install OpenSSL development headers (Linux)
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libssl-dev
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
