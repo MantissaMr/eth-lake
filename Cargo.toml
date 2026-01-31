@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 pyo3 = {version = "0.20", features = ["extension-module", "generate-import-lib"]}
 tokio = {version = "1", features = ["full"]}
 pyo3-asyncio = {version = "0.20", features = ["tokio-runtime"]}
-alloy = {version = "0.1", default-features = false, features = [
+alloy = {version = "0.1", features = [
     "contract",
     "network",
     "provider-http",
