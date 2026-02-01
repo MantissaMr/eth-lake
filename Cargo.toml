@@ -15,14 +15,11 @@ crate-type = ["cdylib"]
 pyo3 = {version = "0.20", features = ["extension-module", "generate-import-lib"]}
 tokio = {version = "1", features = ["full"]}
 pyo3-asyncio = {version = "0.20", features = ["tokio-runtime"]}
-alloy = {version = "0.1", features = [
-    "contract",
-    "network",
+alloy = { version = "0.1", default-features = false, features = [
     "provider-http",
-    "rpc-types-eth",
-    "signer-local",
     "reqwest-rustls-tls",
-]}
+    "rpc-types-eth",
+] }
 arrow = "53"
 parquet = "53"
 futures = "0.3"
