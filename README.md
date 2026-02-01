@@ -30,6 +30,10 @@ async def main():
         concurrency=20
     )
     print(result)
+    
+    #**Note**: Free RPC providers (LlamaRPC, etc.) aggressively throttle concurrent requests. 
+    #> For reliable extraction on free tiers, reduce `concurrency=1`. Production workloads 
+    #> should use paid providers (Alchemy/Infura) with higher rate limits.
 
 if __name__ == "__main__":
     asyncio.run(main())
