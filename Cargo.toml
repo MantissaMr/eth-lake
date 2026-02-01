@@ -6,6 +6,7 @@ description = "Python library for extracting Ethereum data to Parquet"
 license = "MIT"
 repository = "https://github.com/MantissaMr/eth-lake"
 keywords = ["ethereum", "parquet", "data-processing", "python"]
+readme = "README.md"
 
 [lib]
 name = "eth_lake"
