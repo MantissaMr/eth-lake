@@ -1,6 +1,6 @@
 [package]
 name = "eth-lake"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "Python library for extracting Ethereum data to Parquet"
 license = "MIT"
