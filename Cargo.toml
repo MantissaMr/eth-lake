@@ -1,6 +1,6 @@
 [package]
 name = "eth-lake"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 description = "Python library for extracting Ethereum data to Parquet"
 license = "MIT"
@@ -30,12 +30,3 @@ url = "2.5"
 
 [dev-dependencies]
 tempfile = "3.10" 
-
-[package.metadata.maturin]
-requires-python = ">=3.8"
-classifier = [
-    "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
