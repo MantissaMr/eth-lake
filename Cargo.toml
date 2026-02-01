@@ -7,6 +7,7 @@ license = "MIT"
 repository = "https://github.com/MantissaMr/eth-lake"
 keywords = ["ethereum", "parquet", "data-processing", "python"]
 readme = "README.md"
+rust-version = "1.70"
 
 [lib]
 name = "eth_lake"
@@ -30,3 +31,12 @@ url = "2.5"
 
 [dev-dependencies]
 tempfile = "3.10" 
+
+[package.metadata.maturin]
+requires-python = ">=3.8"
+classifier = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
