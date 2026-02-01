@@ -21,14 +21,13 @@ alloy = {version = "0.1", features = [
     "provider-http",
     "rpc-types-eth",
     "signer-local",
-    "reqwest",
     "reqwest-rustls-tls",
 ]}
 arrow = "53"
 parquet = "53"
 futures = "0.3"
 anyhow = "1.0"
-reqwest = {version = "0.12", default-features = false, features = ["rustls-tls"]}
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 url = "2.5"
 
 [dev-dependencies]
