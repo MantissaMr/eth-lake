@@ -1422,7 +1422,7 @@ dependencies = [
 
 [[package]]
 name = "eth-lake"
-version = "0.1.9"
+version = "0.1.8"
 dependencies = [
  "alloy",
  "anyhow",
